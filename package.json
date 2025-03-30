@@ -1,0 +1,12 @@
+{
+  "name": "critters-game-1-shot",
+  "version": "1.0.0",
+  "description": "A simple side-scrolling scene using Phaser.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
