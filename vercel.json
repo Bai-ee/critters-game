@@ -2,14 +2,18 @@
     "version": 2,
     "builds": [
         {
-            "src": "*.html",
+            "src": "**/*",
             "use": "@vercel/static"
         }
     ],
     "routes": [
         {
+            "src": "/game.js",
+            "dest": "/game.js"
+        },
+        {
             "src": "/(.*)",
-            "dest": "/"
+            "dest": "/$1"
         }
     ]
 }
