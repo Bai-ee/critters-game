@@ -26,7 +26,6 @@ let background;
 let critterWidth = 0;
 let critterHeight = 0;
 let cursors;
-let spotlight;
 let playerScale;
 
 // Handle window resize
@@ -114,10 +113,6 @@ function create() {
         repeat: -1
     });
 
-    // Create spotlight effect around player
-    spotlight = this.add.circle(0, 0, 600, 0x000000, 0.4);
-    spotlight.setBlendMode(Phaser.BlendModes.MULTIPLY);
-
     // Set up cursor keys
     cursors = this.input.keyboard.createCursorKeys();
 
@@ -145,8 +140,4 @@ function update() {
 
     // Keep vertical position fixed
     player.y = config.height / 2;
-
-    // Update spotlight position to follow player
-    spotlight.x = player.x;
-    spotlight.y = player.y;
 }
