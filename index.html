@@ -1,25 +1,41 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Critters Game</title>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
     <style>
         body {
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            background-color: black;
-            touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            background: #000;
+            overflow-x: auto;
+            height: 100vh;
+            width: 100%;
+        }
+        #game-container {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 5036px;
+            height: 100vh;
         }
         canvas {
-            display: block;
+            margin: 0;
+            padding: 0;
+            width: 5036px !important;
+            height: 100vh !important;
+            object-fit: cover;
         }
     </style>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.85.0/dist/phaser.min.js"></script>
 </head>
 <body>
-    <div id="game"></div>
-    <script src="game.js"></script>
+    <div id="game-container">
+        <div id="game"></div>
+    </div>
+    <script type="text/javascript" src="game.js"></script>
 </body>
 </html>
