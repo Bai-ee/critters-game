@@ -24,12 +24,8 @@ const config = {
 const game = new Phaser.Game(config);
 let player;
 let background;
-let critterWidth = 0;
-let critterHeight = 0;
 let cursors;
-let playerScale;
-let isAttacking = false;
-let currentAnimation = 'walk';
+let currentAnimation = 'idle';
 let spaceKey;
 
 // Handle window resize
@@ -62,28 +58,20 @@ function resizeBackground() {
 
 function preload() {
     this.load.image('background', 'background.png');
-    this.load.image('critter', 'critter.png');
-    this.load.spritesheet('brawler', 
-        'https://cdn.phaserfiles.com/v385/assets/animations/brawler48x48.png',
-        { frameWidth: 48, frameHeight: 48 }
-    );
+    this.load.spritesheet('brawler', 'assets/brawler48x48.png', { frameWidth: 48, frameHeight: 48 });
 }
 
 function create() {
+    // Add background
     background = this.add.image(0, 0, 'background');
     background.setOrigin(0, 0);
     background.setTint(0x666666);
     resizeBackground();
 
-    const critterTexture = this.textures.get('critter');
-    critterWidth = critterTexture.source[0].width;
-    critterHeight = critterTexture.source[0].height;
-
-    playerScale = (config.height * 0.30) / 48; 
-
+    // Add player
     player = this.physics.add.sprite(config.width / 2, config.height / 2, 'brawler');
     player.setCollideWorldBounds(true);
-    player.setScale(playerScale * 2);
+    player.setScale(4);
 
     // Create all animations
     this.anims.create({
@@ -103,14 +91,14 @@ function create() {
     this.anims.create({
         key: 'kick',
         frames: this.anims.generateFrameNumbers('brawler', { frames: [ 10, 11, 12, 13, 10 ] }),
-        frameRate: 12,
+        frameRate: 8,
         repeat: 0
     });
 
     this.anims.create({
         key: 'punch',
         frames: this.anims.generateFrameNumbers('brawler', { frames: [ 15, 16, 17, 18, 17, 15 ] }),
-        frameRate: 12,
+        frameRate: 8,
         repeat: 0
     });
 
@@ -118,13 +106,13 @@ function create() {
         key: 'jump',
         frames: this.anims.generateFrameNumbers('brawler', { frames: [ 20, 21, 22, 23 ] }),
         frameRate: 8,
-        repeat: -1
+        repeat: 0
     });
 
     this.anims.create({
         key: 'jumpkick',
         frames: this.anims.generateFrameNumbers('brawler', { frames: [ 20, 21, 22, 23, 25, 23, 22, 21 ] }),
-        frameRate: 12,
+        frameRate: 8,
         repeat: 0
     });
 
@@ -142,50 +130,71 @@ function create() {
         repeat: 0
     });
 
+    // Set up controls
     cursors = this.input.keyboard.createCursorKeys();
     spaceKey = this.input.keyboard.addKey('SPACE');
 
+    // Set up camera
     this.cameras.main.setBounds(0, 0, config.width, config.height);
     this.cameras.main.startFollow(player, true, 0.1, 0.1);
 
-    // Start with walking animation
-    player.play('walk');
+    // Start with idle animation
+    player.play('idle');
 }
 
 function update() {
     const speed = 300;
+    const isInAction = ['kick', 'punch', 'jump', 'jumpkick', 'win', 'die'].includes(currentAnimation);
 
-    // Handle attack animations with space key
-    if (spaceKey.isDown && !isAttacking) {
-        isAttacking = true;
-        const attackMoves = ['kick', 'punch', 'jumpkick'];
-        const randomAttack = attackMoves[Math.floor(Math.random() * attackMoves.length)];
-        
-        player.play(randomAttack);
-        player.once('animationcomplete', () => {
-            isAttacking = false;
-            player.play(currentAnimation);
-        });
+    // Handle special moves
+    if (!isInAction) {
+        if (spaceKey.isDown) {
+            currentAnimation = 'punch';
+            player.play('punch').once('animationcomplete', () => {
+                currentAnimation = 'idle';
+                player.play('idle');
+            });
+        } else if (cursors.up.isDown) {
+            currentAnimation = 'jump';
+            player.play('jump').once('animationcomplete', () => {
+                currentAnimation = 'idle';
+                player.play('idle');
+            });
+        } else if (cursors.down.isDown) {
+            currentAnimation = 'kick';
+            player.play('kick').once('animationcomplete', () => {
+                currentAnimation = 'idle';
+                player.play('idle');
+            });
+        }
     }
 
-    if (!isAttacking) {
+    // Handle movement only if not in special move
+    if (!isInAction) {
         player.setVelocityX(0);
 
         if (cursors.left.isDown) {
             player.setVelocityX(-speed);
             player.setFlipX(true);
-            currentAnimation = 'walk';
-            player.play('walk', true);
+            if (currentAnimation !== 'walk') {
+                currentAnimation = 'walk';
+                player.play('walk');
+            }
         } else if (cursors.right.isDown) {
             player.setVelocityX(speed);
             player.setFlipX(false);
-            currentAnimation = 'walk';
-            player.play('walk', true);
-        } else {
+            if (currentAnimation !== 'walk') {
+                currentAnimation = 'walk';
+                player.play('walk');
+            }
+        } else if (currentAnimation !== 'idle') {
             currentAnimation = 'idle';
-            player.play('idle', true);
+            player.play('idle');
         }
+    } else {
+        player.setVelocityX(0);
     }
 
+    // Keep vertical position fixed
     player.y = config.height / 2;
 }
