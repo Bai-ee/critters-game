@@ -91,7 +91,7 @@ function create() {
     // Add player using sprite sheet
     player = this.physics.add.sprite(config.width / 2, config.height / 2, 'character');
     player.setCollideWorldBounds(true);
-    player.setScale(playerScale * 1.5); // Adjust scale factor to match original size
+    player.setScale(playerScale * 4.5); // Increased from 1.5 to 4.5 (3x larger)
 
     // Create walking animations
     this.anims.create({
@@ -115,7 +115,7 @@ function create() {
     });
 
     // Create spotlight effect around player
-    spotlight = this.add.circle(0, 0, 200, 0x000000, 0.4);
+    spotlight = this.add.circle(0, 0, 600, 0x000000, 0.4);
     spotlight.setBlendMode(Phaser.BlendModes.MULTIPLY);
 
     // Set up cursor keys
