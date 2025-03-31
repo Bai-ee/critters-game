@@ -26,8 +26,6 @@ let player;
 let background;
 let cursors;
 let currentAnimation = 'idle';
-let animationIndex = 0;
-const animations = ['idle', 'walk', 'kick', 'punch', 'jump', 'jumpkick', 'win', 'die'];
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -59,7 +57,11 @@ function resizeBackground() {
 
 function preload() {
     this.load.image('background', 'background.png');
-    this.load.spritesheet('brawler', 'assets/brawler48x48.png', { frameWidth: 48, frameHeight: 48 });
+    this.load.spritesheet('newCharacter', 'assets/test_art.png', { 
+        frameWidth: 416,  
+        frameHeight: 454, 
+        spacing: 0       
+    });
 }
 
 function create() {
@@ -69,65 +71,33 @@ function create() {
     background.setTint(0x666666);
     resizeBackground();
 
-    // Add player
-    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'brawler');
+    // Add player with new character
+    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'newCharacter');
     player.setCollideWorldBounds(true);
-    player.setScale(8);
+    
+    // Calculate scale to make character a reasonable size
+    const desiredHeight = config.height * 0.3; 
+    const scale = desiredHeight / player.height;
+    player.setScale(scale);
 
-    // Create all animations
+    // Create animations for walking (20 frames total)
     this.anims.create({
         key: 'walk',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 0, 1, 2, 3 ] }),
-        frameRate: 8,
+        frames: this.anims.generateFrameNumbers('newCharacter', { 
+            start: 0,
+            end: 19  // Full walk cycle uses frames 0-19
+        }),
+        frameRate: 12, // Increased frame rate for smoother animation
         repeat: -1
     });
 
     this.anims.create({
         key: 'idle',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 5, 6, 7, 8 ] }),
-        frameRate: 8,
-        repeat: -1
-    });
-
-    this.anims.create({
-        key: 'kick',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 10, 11, 12, 13, 10 ] }),
-        frameRate: 8,
-        repeat: 0
-    });
-
-    this.anims.create({
-        key: 'punch',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 15, 16, 17, 18, 17, 15 ] }),
-        frameRate: 8,
-        repeat: 0
-    });
-
-    this.anims.create({
-        key: 'jump',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 20, 21, 22, 23 ] }),
-        frameRate: 8,
-        repeat: 0
-    });
-
-    this.anims.create({
-        key: 'jumpkick',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 20, 21, 22, 23, 25, 23, 22, 21 ] }),
-        frameRate: 8,
-        repeat: 0
-    });
-
-    this.anims.create({
-        key: 'win',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 30, 31 ] }),
-        frameRate: 8,
-        repeat: -1
-    });
-
-    this.anims.create({
-        key: 'die',
-        frames: this.anims.generateFrameNumbers('brawler', { frames: [ 35, 36, 37 ] }),
-        frameRate: 8,
+        frames: this.anims.generateFrameNumbers('newCharacter', { 
+            start: 0,
+            end: 0
+        }),
+        frameRate: 1,
         repeat: 0
     });
 
@@ -140,64 +110,31 @@ function create() {
 
     // Start with idle animation
     player.play('idle');
-
-    // Add click handler for animation cycling
-    this.input.on('pointerdown', () => {
-        animationIndex = (animationIndex + 1) % animations.length;
-        currentAnimation = animations[animationIndex];
-        
-        // Play the new animation
-        player.play(currentAnimation);
-
-        // If it's a one-time animation, go back to idle when done
-        if (!['idle', 'walk', 'win'].includes(currentAnimation)) {
-            player.once('animationcomplete', () => {
-                currentAnimation = 'idle';
-                player.play('idle');
-            });
-        }
-
-        // Add text to show current animation
-        const existingText = this.children.list.find(child => child.type === 'Text');
-        if (existingText) {
-            existingText.destroy();
-        }
-        this.add.text(10, 10, `Animation: ${currentAnimation}`, { 
-            color: '#00ff00',
-            fontSize: '24px',
-            backgroundColor: '#000000'
-        }).setScrollFactor(0);
-    });
 }
 
 function update() {
     const speed = 300;
-    const isInAction = ['kick', 'punch', 'jump', 'jumpkick', 'win', 'die'].includes(currentAnimation);
 
-    // Handle movement only if not in special move
-    if (!isInAction) {
-        player.setVelocityX(0);
+    // Handle movement
+    player.setVelocityX(0);
 
-        if (cursors.left.isDown) {
-            player.setVelocityX(-speed);
-            player.setFlipX(false);
-            if (currentAnimation !== 'walk') {
-                currentAnimation = 'walk';
-                player.play('walk');
-            }
-        } else if (cursors.right.isDown) {
-            player.setVelocityX(speed);
-            player.setFlipX(true);
-            if (currentAnimation !== 'walk') {
-                currentAnimation = 'walk';
-                player.play('walk');
-            }
-        } else if (currentAnimation === 'walk') {
-            currentAnimation = 'idle';
-            player.play('idle');
+    if (cursors.left.isDown) {
+        player.setVelocityX(-speed);
+        player.setFlipX(true);
+        if (currentAnimation !== 'walk') {
+            currentAnimation = 'walk';
+            player.play('walk');
         }
-    } else {
-        player.setVelocityX(0);
+    } else if (cursors.right.isDown) {
+        player.setVelocityX(speed);
+        player.setFlipX(false);
+        if (currentAnimation !== 'walk') {
+            currentAnimation = 'walk';
+            player.play('walk');
+        }
+    } else if (currentAnimation === 'walk') {
+        currentAnimation = 'idle';
+        player.play('idle');
     }
 
     // Keep vertical position fixed
