@@ -65,9 +65,9 @@ function preload() {
     // Get the original critter dimensions for scaling reference
     this.load.image('critter', 'critter.png');
     
-    // Load character spritesheet from local template
+    // Load character spritesheet
     this.load.spritesheet('character', 
-        'assets/character-template.png',
+        'https://labs.phaser.io/assets/sprites/dude.png',
         { frameWidth: 32, frameHeight: 48 }
     );
 }
