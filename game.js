@@ -28,6 +28,10 @@ let cursors;
 let currentAnimation = 'idle';
 let animationIndex = 0;
 const animations = ['idle', 'walk', 'kick', 'punch', 'jump', 'jumpkick', 'win', 'die'];
+let leftButton;
+let rightButton;
+let actionButton;
+let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -38,7 +42,26 @@ window.addEventListener('resize', () => {
     if (player) {
         player.y = config.height / 2;
     }
+    if (isMobile) {
+        repositionButtons();
+    }
 });
+
+function repositionButtons() {
+    if (leftButton && rightButton && actionButton) {
+        // Position left button at bottom left
+        leftButton.x = 100;
+        leftButton.y = config.height - 100;
+
+        // Position right button at bottom left + offset
+        rightButton.x = 300;
+        rightButton.y = config.height - 100;
+
+        // Position action button at bottom right
+        actionButton.x = config.width - 100;
+        actionButton.y = config.height - 100;
+    }
+}
 
 function resizeBackground() {
     const imageRatio = 1462 / 5036;
@@ -55,6 +78,20 @@ function resizeBackground() {
         background.setX((5036 - width) / 2);
         background.setY(0);
     }
+}
+
+function createButton(scene, x, y, text) {
+    const button = scene.add.circle(x, y, 40, 0x666666, 0.8);
+    const buttonText = scene.add.text(x, y, text, {
+        color: '#ffffff',
+        fontSize: '32px'
+    }).setOrigin(0.5);
+    
+    button.setScrollFactor(0);
+    buttonText.setScrollFactor(0);
+    
+    button.setInteractive();
+    return button;
 }
 
 function preload() {
@@ -142,32 +179,69 @@ function create() {
     player.play('idle');
 
     // Add click handler for animation cycling
-    this.input.on('pointerdown', () => {
-        animationIndex = (animationIndex + 1) % animations.length;
-        currentAnimation = animations[animationIndex];
-        
-        // Play the new animation
-        player.play(currentAnimation);
+    this.input.on('pointerdown', (pointer) => {
+        // Only trigger animation change if not clicking buttons on mobile
+        if (!isMobile || (isMobile && pointer.y < config.height - 150)) {
+            animationIndex = (animationIndex + 1) % animations.length;
+            currentAnimation = animations[animationIndex];
+            
+            // Play the new animation
+            player.play(currentAnimation);
 
-        // If it's a one-time animation, go back to idle when done
-        if (!['idle', 'walk', 'win'].includes(currentAnimation)) {
-            player.once('animationcomplete', () => {
-                currentAnimation = 'idle';
-                player.play('idle');
-            });
-        }
+            // If it's a one-time animation, go back to idle when done
+            if (!['idle', 'walk', 'win'].includes(currentAnimation)) {
+                player.once('animationcomplete', () => {
+                    currentAnimation = 'idle';
+                    player.play('idle');
+                });
+            }
 
-        // Add text to show current animation
-        const existingText = this.children.list.find(child => child.type === 'Text');
-        if (existingText) {
-            existingText.destroy();
+            // Add text to show current animation
+            const existingText = this.children.list.find(child => child.type === 'Text');
+            if (existingText) {
+                existingText.destroy();
+            }
+            this.add.text(10, 10, `Animation: ${currentAnimation}`, { 
+                color: '#00ff00',
+                fontSize: '24px',
+                backgroundColor: '#000000'
+            }).setScrollFactor(0);
         }
-        this.add.text(10, 10, `Animation: ${currentAnimation}`, { 
-            color: '#00ff00',
-            fontSize: '24px',
-            backgroundColor: '#000000'
-        }).setScrollFactor(0);
     });
+
+    // Add mobile controls if on mobile device
+    if (isMobile) {
+        leftButton = createButton(this, 100, config.height - 100, '←');
+        rightButton = createButton(this, 300, config.height - 100, '→');
+        actionButton = createButton(this, config.width - 100, config.height - 100, 'A');
+
+        let isLeftDown = false;
+        let isRightDown = false;
+
+        leftButton.on('pointerdown', () => { isLeftDown = true; });
+        leftButton.on('pointerup', () => { isLeftDown = false; });
+        leftButton.on('pointerout', () => { isLeftDown = false; });
+
+        rightButton.on('pointerdown', () => { isRightDown = true; });
+        rightButton.on('pointerup', () => { isRightDown = false; });
+        rightButton.on('pointerout', () => { isRightDown = false; });
+
+        actionButton.on('pointerdown', () => {
+            if (!['kick', 'punch', 'jump', 'jumpkick', 'win', 'die'].includes(currentAnimation)) {
+                currentAnimation = 'kick';
+                player.play('kick').once('animationcomplete', () => {
+                    currentAnimation = 'idle';
+                    player.play('idle');
+                });
+            }
+        });
+
+        // Override cursor keys for mobile
+        cursors = {
+            left: { isDown: () => isLeftDown },
+            right: { isDown: () => isRightDown }
+        };
+    }
 }
 
 function update() {
