@@ -27,6 +27,7 @@ let critterWidth = 0;
 let critterHeight = 0;
 let cursors;
 let spotlight;
+let playerScale;
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -62,8 +63,14 @@ function preload() {
     // Load the background image
     this.load.image('background', 'background.png');
     
-    // Load the critter sprite
+    // Get the original critter dimensions for scaling reference
     this.load.image('critter', 'critter.png');
+    
+    // Load character spritesheet
+    this.load.spritesheet('character', 
+        'https://labs.phaser.io/assets/sprites/dude.png',
+        { frameWidth: 32, frameHeight: 48 }
+    );
 }
 
 function create() {
@@ -73,18 +80,39 @@ function create() {
     background.setTint(0x666666); // Darken the background
     resizeBackground();
 
-    // Get critter texture dimensions
+    // Get critter texture dimensions for scaling reference
     const critterTexture = this.textures.get('critter');
     critterWidth = critterTexture.source[0].width;
     critterHeight = critterTexture.source[0].height;
 
-    // Add player using critter sprite
-    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'critter');
-    player.setCollideWorldBounds(true);
+    // Calculate scale factor based on original critter size
+    playerScale = (config.height * 0.30) / critterHeight;
 
-    // Scale the player based on screen height
-    const scaleFactor = (config.height * 0.30) / critterHeight; // Make critter 30% of screen height
-    player.setScale(scaleFactor);
+    // Add player using sprite sheet
+    player = this.physics.add.sprite(config.width / 2, config.height / 2, 'character');
+    player.setCollideWorldBounds(true);
+    player.setScale(playerScale * 1.5); // Adjust scale factor to match original size
+
+    // Create walking animations
+    this.anims.create({
+        key: 'left',
+        frames: this.anims.generateFrameNumbers('character', { start: 0, end: 3 }),
+        frameRate: 10,
+        repeat: -1
+    });
+
+    this.anims.create({
+        key: 'turn',
+        frames: [ { key: 'character', frame: 4 } ],
+        frameRate: 20
+    });
+
+    this.anims.create({
+        key: 'right',
+        frames: this.anims.generateFrameNumbers('character', { start: 5, end: 8 }),
+        frameRate: 10,
+        repeat: -1
+    });
 
     // Create spotlight effect around player
     spotlight = this.add.circle(0, 0, 200, 0x000000, 0.4);
@@ -107,10 +135,12 @@ function update() {
     // Handle horizontal movement only
     if (cursors.left.isDown) {
         player.setVelocityX(-speed);
-        player.setFlipX(true);
+        player.anims.play('left', true);
     } else if (cursors.right.isDown) {
         player.setVelocityX(speed);
-        player.setFlipX(false);
+        player.anims.play('right', true);
+    } else {
+        player.anims.play('turn');
     }
 
     // Keep vertical position fixed
