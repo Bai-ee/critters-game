@@ -26,7 +26,8 @@ let player;
 let background;
 let cursors;
 let currentAnimation = 'idle';
-let spaceKey;
+let animationIndex = 0;
+const animations = ['idle', 'walk', 'kick', 'punch', 'jump', 'jumpkick', 'win', 'die'];
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -130,9 +131,8 @@ function create() {
         repeat: 0
     });
 
-    // Set up controls
+    // Set up cursor keys for movement
     cursors = this.input.keyboard.createCursorKeys();
-    spaceKey = this.input.keyboard.addKey('SPACE');
 
     // Set up camera
     this.cameras.main.setBounds(0, 0, config.width, config.height);
@@ -140,34 +140,39 @@ function create() {
 
     // Start with idle animation
     player.play('idle');
+
+    // Add click handler for animation cycling
+    this.input.on('pointerdown', () => {
+        animationIndex = (animationIndex + 1) % animations.length;
+        currentAnimation = animations[animationIndex];
+        
+        // Play the new animation
+        player.play(currentAnimation);
+
+        // If it's a one-time animation, go back to idle when done
+        if (!['idle', 'walk', 'win'].includes(currentAnimation)) {
+            player.once('animationcomplete', () => {
+                currentAnimation = 'idle';
+                player.play('idle');
+            });
+        }
+
+        // Add text to show current animation
+        const existingText = this.children.list.find(child => child.type === 'Text');
+        if (existingText) {
+            existingText.destroy();
+        }
+        this.add.text(10, 10, `Animation: ${currentAnimation}`, { 
+            color: '#00ff00',
+            fontSize: '24px',
+            backgroundColor: '#000000'
+        }).setScrollFactor(0);
+    });
 }
 
 function update() {
     const speed = 300;
     const isInAction = ['kick', 'punch', 'jump', 'jumpkick', 'win', 'die'].includes(currentAnimation);
-
-    // Handle special moves
-    if (!isInAction) {
-        if (spaceKey.isDown) {
-            currentAnimation = 'punch';
-            player.play('punch').once('animationcomplete', () => {
-                currentAnimation = 'idle';
-                player.play('idle');
-            });
-        } else if (cursors.up.isDown) {
-            currentAnimation = 'jump';
-            player.play('jump').once('animationcomplete', () => {
-                currentAnimation = 'idle';
-                player.play('idle');
-            });
-        } else if (cursors.down.isDown) {
-            currentAnimation = 'kick';
-            player.play('kick').once('animationcomplete', () => {
-                currentAnimation = 'idle';
-                player.play('idle');
-            });
-        }
-    }
 
     // Handle movement only if not in special move
     if (!isInAction) {
@@ -175,19 +180,19 @@ function update() {
 
         if (cursors.left.isDown) {
             player.setVelocityX(-speed);
-            player.setFlipX(true);
+            player.setFlipX(false);
             if (currentAnimation !== 'walk') {
                 currentAnimation = 'walk';
                 player.play('walk');
             }
         } else if (cursors.right.isDown) {
             player.setVelocityX(speed);
-            player.setFlipX(false);
+            player.setFlipX(true);
             if (currentAnimation !== 'walk') {
                 currentAnimation = 'walk';
                 player.play('walk');
             }
-        } else if (currentAnimation !== 'idle') {
+        } else if (currentAnimation === 'walk') {
             currentAnimation = 'idle';
             player.play('idle');
         }
