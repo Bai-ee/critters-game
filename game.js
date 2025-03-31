@@ -72,7 +72,7 @@ function create() {
     // Add player
     player = this.physics.add.sprite(config.width / 2, config.height / 2, 'brawler');
     player.setCollideWorldBounds(true);
-    player.setScale(4);
+    player.setScale(8);
 
     // Create all animations
     this.anims.create({
