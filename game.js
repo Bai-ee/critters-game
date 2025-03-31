@@ -80,25 +80,25 @@ function create() {
     const scale = desiredHeight / player.height;
     player.setScale(scale);
 
-    // Create animations for walking (20 frames total)
+    // Create animations for walking and idle
     this.anims.create({
         key: 'walk',
         frames: this.anims.generateFrameNumbers('newCharacter', { 
             start: 0,
-            end: 19  // Full walk cycle uses frames 0-19
+            end: 19  // Walk cycle uses frames 0-19
         }),
-        frameRate: 12, // Increased frame rate for smoother animation
+        frameRate: 12,
         repeat: -1
     });
 
     this.anims.create({
         key: 'idle',
         frames: this.anims.generateFrameNumbers('newCharacter', { 
-            start: 0,
-            end: 0
+            start: 21,
+            end: 36  // Idle animation uses frames 21-36
         }),
-        frameRate: 1,
-        repeat: 0
+        frameRate: 15, // Increased from 8 to 15 for faster animation
+        repeat: -1
     });
 
     // Set up cursor keys for movement
