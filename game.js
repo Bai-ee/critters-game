@@ -27,6 +27,8 @@ let critterWidth = 0;
 let critterHeight = 0;
 let cursors;
 let playerScale;
+let isAttacking = false;
+let enterKey;
 
 // Handle window resize
 window.addEventListener('resize', () => {
@@ -113,8 +115,21 @@ function create() {
         repeat: -1
     });
 
+    // Create attack animation
+    this.anims.create({
+        key: 'attack',
+        frames: [
+            { key: 'character', frame: 4 }, // Start with idle
+            { key: 'character', frame: 0 }, // Quick lean forward
+            { key: 'character', frame: 4 }, // Back to idle
+        ],
+        frameRate: 15,
+        repeat: 0
+    });
+
     // Set up cursor keys
     cursors = this.input.keyboard.createCursorKeys();
+    enterKey = this.input.keyboard.addKey('ENTER');
 
     // Set up camera to follow player
     this.cameras.main.setBounds(0, 0, config.width, config.height);
@@ -124,18 +139,29 @@ function create() {
 function update() {
     const speed = 300;
 
-    // Reset velocity
-    player.setVelocityX(0);
+    // Handle attack animation
+    if (enterKey.isDown && !isAttacking) {
+        isAttacking = true;
+        player.anims.play('attack', true).once('animationcomplete', () => {
+            isAttacking = false;
+        });
+    }
 
-    // Handle horizontal movement only
-    if (cursors.left.isDown) {
-        player.setVelocityX(-speed);
-        player.anims.play('left', true);
-    } else if (cursors.right.isDown) {
-        player.setVelocityX(speed);
-        player.anims.play('right', true);
-    } else {
-        player.anims.play('turn');
+    // Only allow movement if not attacking
+    if (!isAttacking) {
+        // Reset velocity
+        player.setVelocityX(0);
+
+        // Handle horizontal movement only
+        if (cursors.left.isDown) {
+            player.setVelocityX(-speed);
+            player.anims.play('left', true);
+        } else if (cursors.right.isDown) {
+            player.setVelocityX(speed);
+            player.anims.play('right', true);
+        } else {
+            player.anims.play('turn');
+        }
     }
 
     // Keep vertical position fixed
